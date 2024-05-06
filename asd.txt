@@ -1,0 +1,94 @@
+<template>
+  <div v-if="task" class="task-details">
+    <h2>Детали задачи</h2>
+    <div v-if="isEditing" class="edit-mode">
+      <div v-for="(value, key) in editedTask" :key="key" class="field">
+        <label :for="key">{{ getFieldLabel(key) }}:</label>
+        <input v-model="editedTask[key]" :id="key" type="text">
+      </div>
+      <div class="buttons">
+        <button @click="saveChanges">Сохранить</button>
+        <button @click="cancelEdit">Отмена</button>
+      </div>
+    </div>
+    <div v-else class="view-mode">
+      <div v-for="(value, key) in task" :key="key" class="field">
+        <label :for="key">{{ getFieldLabel(key) }}:</label>
+        <span>{{ task[key] }}</span>
+      </div>
+      <div class="buttons">
+        <button @click="toggleEditMode">Редактировать</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+
+<script>
+export default {
+  props: {
+    task: Object,
+    updateTaskData: Function // Функция для обновления данных задачи
+  },
+  data() {
+    return {
+      editedTask: {}, // Объект для хранения отредактированных данных задачи
+      isEditing: false // Флаг режима редактирования
+    };
+  },
+  watch: {
+    task: {
+      handler(newValue) {
+        // Копируем данные задачи в объект editedTask при обновлении свойства task
+        this.editedTask = { ...newValue };
+      },
+      immediate: true // Вызываем handler сразу после создания компонента
+    }
+  },
+  methods: {
+    getFieldLabel(key) {
+      const labels = {
+        name: "Название",
+        email: "Email",
+        phone: "Телефон",
+        jobTitle: "Должность",
+        description: "Комментарий",
+        statusStage: "Статус"
+      };
+      return labels[key] || key;
+    },
+    saveChanges() {
+      // Вызываем функцию для сохранения изменений с передачей отредактированных данных
+      this.updateTaskData({ id: this.task.id, editedTask: this.editedTask });
+      // Переключаем режим в просмотр после сохранения изменений
+      this.isEditing = false;
+    },
+    cancelEdit() {
+      // Отменяем редактирование и возвращаем исходные данные задачи
+      this.isEditing = false;
+      this.editedTask = { ...this.task };
+    },
+    toggleEditMode() {
+      // Переключаем режим между просмотром и редактированием
+      this.isEditing = true;
+    },
+    handleFileUpload(event) {
+      const file = event.target.files[0];
+      // Эмитируем событие для загрузки файла
+      this.$emit('file-uploaded', file);
+    }
+  },
+  mounted() {
+    // Загрузка данных задачи при открытии страницы
+    this.editedTask = { ...this.task };
+  },
+};
+</script>
+
+<style scoped>
+.task-details {
+  margin-left: 20px; /* Располагаем детали справа от списка задач */
+  padding: 20px;
+  border: 1px solid #ccc;
+}
+</style>
