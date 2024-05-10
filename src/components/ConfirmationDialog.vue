@@ -16,7 +16,7 @@ export default {
   props: {
     show: Boolean,
     statusOptions: Array,
-    taskId: Number // Передаем ID выбранной задачи
+    taskId: Number
   },
   data() {
     return {
@@ -25,7 +25,7 @@ export default {
   },
   methods: {
     confirmStatus() {
-      this.$emit('confirm', this.selectedStatus); // Отправляем выбранный статус родительскому компоненту
+      this.$emit('confirm', this.selectedStatus);
     },
     cancel() {
       this.$emit('cancel');

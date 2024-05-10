@@ -17,7 +17,6 @@ export default {
       this.$emit('open-confirmation-dialog', taskId);
     },
     handleClick() {
-      // Эмитируем событие для обновления данных задачи
       this.$emit('update-task', this.task);
     }
   }

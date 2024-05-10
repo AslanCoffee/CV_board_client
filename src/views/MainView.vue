@@ -20,6 +20,7 @@
       :task="selectedTask"
       :files="selectedTaskDocuments"
       @file-uploaded="handleFileUploaded"
+      @file-downloaded="downloadFile"
       :update-task-data="updateTaskData"
       @update="loadTasks" />
     </div>
@@ -103,8 +104,8 @@ export default {
       this.selectedTaskId = null;
     },
     async selectTask(task) {
-      this.selectedTask = task;
       await this.fetchDocuments(task.id);
+      this.selectedTask = task;
     },
     async handleFileUploaded(file) {
       try {
@@ -119,7 +120,6 @@ export default {
         await this.$store.dispatch('mTask/updateTask', { id, taskData: editedTask });
         const index = this.tasks.findIndex(task => task.id === id);
         if (index !== -1) {
-          // Обновляем данные в массиве tasks через реактивную ссылку ref
           this.tasks[index] = editedTask;
         }
       } catch (error) {
@@ -131,9 +131,34 @@ export default {
         console.log(taskId);
         const response = await this.$store.dispatch('mDocument/getDocumentsByTaskId', { taskId: taskId });
         console.log(response);
-        this.selectedTaskDocuments = response; // Сохраняем данные о документах
+        this.selectedTaskDocuments = response; 
       } catch (error) {
         console.error('Ошибка при получении списка документов:', error);
+      }
+    },
+    async downloadFile(fileId) {
+      try {
+        const response = await this.$store.dispatch('mDocument/documentDownload', fileId)
+        console.log(response.data);
+        const url = window.URL.createObjectURL(new Blob([response]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', fileId); // Указываем имя файла
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        // const blob = await response.blob();
+        // const url = window.URL.createObjectURL(blob);
+        // const link = document.createElement('a');
+        // link.href = url;
+        // link.setAttribute('download', fileId);
+        // document.body.appendChild(link);
+        // link.click();
+        // document.body.removeChild(link);
+        // window.URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error('Ошибка при загрузке файла:', error);
       }
     },
   }

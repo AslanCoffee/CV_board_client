@@ -25,8 +25,8 @@ export default {
   },
   data() {
     return {
-      tasks: [], // Ваши задачи
-      selectedTask: null // Выбранная задача для отображения деталей
+      tasks: [], 
+      selectedTask: null 
     };
   },
   methods: {

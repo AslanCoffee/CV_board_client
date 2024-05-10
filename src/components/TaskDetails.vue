@@ -30,7 +30,7 @@
       </div>
       
       <div v-if="files && files.length > 0">
-        <h3>Загруженные файлы:</h3>
+        <h3>Загруженные файлsы:</h3>
         <ul>
           <li v-for="fileId in files" :key="fileId">
             <a :href="`/files/${fileId}`" target="_blank">File {{ fileId }}</a>
@@ -75,11 +75,11 @@
       <button @click="toggleEditMode">Редактировать</button>
     </div>
 
-    <h3>Загруженные файлы:</h3>
+    <h3>Загруженные файлы down:</h3>
     <div v-if="files && files.length > 0">
       <ul>
         <li v-for="fileId in files" :key="fileId">
-          <a :href="`/files/${fileId}`" target="_blank" @click.prevent="downloadFile(fileId)">File {{ fileId }}</a>
+          <a :href="`${fileId}`" @click.prevent="downloadFileEvent(fileId)">File {{ fileId }}</a>
         </li>
       </ul>
     </div>
@@ -91,80 +91,93 @@
 export default {
   props: {
     task: Object,
-    updateTaskData: Function, // Функция для обновления данных задачи
+    updateTaskData: Function,
     files: Array,
   },
   data() {
     return {
-      editedTask: {}, // Объект для хранения отредактированных данных задачи
-      isEditing: false, // Флаг режима редактирования
+      editedTask: {}, 
+      isEditing: false,
       documents: []
     };
   },
   watch: {
     task: {
       handler(newValue) {
-        // Копируем данные задачи в объект editedTask при обновлении свойства task
         this.editedTask = { ...newValue };
       },
-      immediate: true // Вызываем handler сразу после создания компонента
+      immediate: true 
     }
   },
   methods: {
     saveChanges() {
       Object.assign(this.task, this.editedTask);
-      // Вызываем функцию для сохранения изменений с передачей отредактированных данных
       this.updateTaskData({ id: this.task.id, editedTask: this.editedTask });
-      // Переключаем режим в просмотр после сохранения изменений
       this.isEditing = false;
       this.$emit('update', this.editedTask);
     },
     cancelEdit() {
-      // Отменяем редактирование и возвращаем исходные данные задачи
       this.isEditing = false;
       this.editedTask = { ...this.task };
     },
     toggleEditMode() {
-      // Переключаем режим между просмотром и редактированием
       this.isEditing = true;
     },
     async handleFileUpload(event) {
       const file = event.target.files[0];
-      // Эмитируем событие для загрузки файла
       this.$emit('file-uploaded', file);
     },
-    downloadFile(fileId) {
-      // Выполняем запрос на сервер для загрузки файла
-      // Можете использовать, например, axios или fetch
-      fetch(`${fileId}`)
-        .then(response => response.blob())
-        .then(blob => {
-          // Создаем ссылку для скачивания файла
-          const url = window.URL.createObjectURL(new Blob([blob]));
-          // Создаем ссылку для скачивания файла
-          const link = document.createElement('a');
-          link.href = url;
-          link.setAttribute('download', `file_${fileId}`); // Устанавливаем имя файла
-          // Автоматически нажимаем на ссылку для скачивания файла
-          link.click();
-          // Очищаем ссылку
-          window.URL.revokeObjectURL(url);
-        })
-        .catch(error => {
-          console.error('Ошибка при загрузке файла:', error);
-        });
+    async downloadFileEvent(fileId) {
+      console.log(fileId)
+      this.$emit('file-downloaded', fileId);
     },
+    // async downloadFile(fileId) {
+    //   try {
+    //     const response = await fetch("documents/download/"+fileId);
+    //     const blob = await response.blob();
+    //     const url = window.URL.createObjectURL(blob);
+    //     const link = document.createElement('a');
+    //     link.href = url;
+    //     link.setAttribute('download', fileId);
+    //     document.body.appendChild(link);
+    //     link.click();
+    //     document.body.removeChild(link);
+    //     window.URL.revokeObjectURL(url);
+    //   } catch (error) {
+    //     console.error('Ошибка при загрузке файла:', error);
+    //   }
+    // },
   },
   mounted() {
-    // Загрузка данных задачи при открытии страницы
     this.editedTask = { ...this.task };
   },
 };
+
+// async downloadFile(filename) {
+//   try {
+//     console.log(filename);
+//     const response = await axios.get(`/documents/download/${filename}`, {
+//       responseType: 'blob', // Указываем, что ожидаем получить файл в виде blob
+//     });
+//     console.log(response.data);
+//     const url = window.URL.createObjectURL(new Blob([response.data]));
+//     const link = document.createElement('a');
+//     link.href = url;
+//     link.setAttribute('download', filename); // Указываем имя файла
+//     document.body.appendChild(link);
+//     link.click();
+//     document.body.removeChild(link);
+//     window.URL.revokeObjectURL(url);
+//   } catch (error) {
+//     console.error('Ошибка при скачивании файла:', error);
+//     throw error;
+//   }
+// }
 </script>
 
 <style scoped>
 .task-details {
-  margin-left: 20px; /* Располагаем детали справа от списка задач */
+  margin-left: 20px;
   padding: 20px;
   border: 1px solid #ccc;
 }

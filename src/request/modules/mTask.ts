@@ -41,7 +41,7 @@ export default {
         const response = await mReq.actions.sendRequest(context, {
           url: '/tasks/documents',
           method: 'POST',
-          data: formData, // Убираем headers, так как библиотека axios автоматически устанавливает правильный Content-Type
+          data: formData, 
         });
         return response;
       } catch (error) {

@@ -60,8 +60,6 @@ export default {
   methods: {
     async register() {
       try {
-        // Отправляем данные регистрации на сервер
-        // Замените '/auth/register' на ваш реальный URL регистрации
         await this.$store.dispatch('mAuth/register', { registrationData: this.registerData });
         alert('Регистрация прошла успешно!');
       } catch (error) {
@@ -71,10 +69,8 @@ export default {
     },
     async login() {
       try {
-        // Отправляем данные авторизации на сервер
-        // Замените '/auth/log-in' на ваш реальный URL для входа
         await this.$store.dispatch('mAuth/logIn', { logInData: this.loginData });
-        this.isLoggedIn = true; // Устанавливаем флаг авторизации
+        this.isLoggedIn = true; 
         alert('Вы успешно вошли в систему!');
         //await this.$store.dispatch('mAuth/authenticate');
       } catch (error) {
@@ -84,10 +80,8 @@ export default {
     },
     async logout() {
       try {
-        // Выход из системы
-        // Замените '/auth/log-out' на ваш реальный URL для выхода
         await this.$store.dispatch('mAuth/logOut');
-        this.isLoggedIn = false; // Сбрасываем флаг авторизации
+        this.isLoggedIn = false; 
         alert('Вы успешно вышли из системы.');
       } catch (error) {
         console.error('Ошибка при выходе из системы:', error);

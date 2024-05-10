@@ -29,10 +29,8 @@ export default {
 
         const response: AxiosResponse = await axios(requestOptions);
 
-        // Возвращаем данные ответа
         return response.data;
       } catch (error) {
-        // Если произошла ошибка, выбрасываем исключение с сообщением об ошибке
         throw new Error(`Request failed: ${error}`);
       }
     }
