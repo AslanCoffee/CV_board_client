@@ -29,10 +29,10 @@
         <span>{{ editedTask.statusStage }}</span>
       </div>
       
-      <div v-if="task.files && task.files.length > 0">
+      <div v-if="files && files.length > 0">
         <h3>Загруженные файлы:</h3>
         <ul>
-          <li v-for="fileId in task.files" :key="fileId">
+          <li v-for="fileId in files" :key="fileId">
             <a :href="`/files/${fileId}`" target="_blank">File {{ fileId }}</a>
           </li>
         </ul>
@@ -74,6 +74,16 @@
       </div>
       <button @click="toggleEditMode">Редактировать</button>
     </div>
+
+    <h3>Загруженные файлы:</h3>
+    <div v-if="files && files.length > 0">
+      <ul>
+        <li v-for="fileId in files" :key="fileId">
+          <a :href="`/files/${fileId}`" target="_blank" @click.prevent="downloadFile(fileId)">File {{ fileId }}</a>
+        </li>
+      </ul>
+    </div>
+
   </div>
 </template>
 
@@ -81,12 +91,14 @@
 export default {
   props: {
     task: Object,
-    updateTaskData: Function // Функция для обновления данных задачи
+    updateTaskData: Function, // Функция для обновления данных задачи
+    files: Array,
   },
   data() {
     return {
       editedTask: {}, // Объект для хранения отредактированных данных задачи
-      isEditing: false // Флаг режима редактирования
+      isEditing: false, // Флаг режима редактирования
+      documents: []
     };
   },
   watch: {
@@ -120,7 +132,28 @@ export default {
       const file = event.target.files[0];
       // Эмитируем событие для загрузки файла
       this.$emit('file-uploaded', file);
-    }
+    },
+    downloadFile(fileId) {
+      // Выполняем запрос на сервер для загрузки файла
+      // Можете использовать, например, axios или fetch
+      fetch(`${fileId}`)
+        .then(response => response.blob())
+        .then(blob => {
+          // Создаем ссылку для скачивания файла
+          const url = window.URL.createObjectURL(new Blob([blob]));
+          // Создаем ссылку для скачивания файла
+          const link = document.createElement('a');
+          link.href = url;
+          link.setAttribute('download', `file_${fileId}`); // Устанавливаем имя файла
+          // Автоматически нажимаем на ссылку для скачивания файла
+          link.click();
+          // Очищаем ссылку
+          window.URL.revokeObjectURL(url);
+        })
+        .catch(error => {
+          console.error('Ошибка при загрузке файла:', error);
+        });
+    },
   },
   mounted() {
     // Загрузка данных задачи при открытии страницы

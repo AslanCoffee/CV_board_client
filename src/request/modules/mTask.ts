@@ -35,9 +35,11 @@ export default {
       }
       const formData = new FormData();
       formData.append('file', payload.file);
+      formData.append('number', payload.taskData.number);
+      formData.append('taskId', payload.taskData.taskId);
       try {
         const response = await mReq.actions.sendRequest(context, {
-          url: '/tasks/upload', // Убедитесь, что это соответствует URL вашего сервера для загрузки файлов
+          url: '/tasks/documents',
           method: 'POST',
           data: formData, // Убираем headers, так как библиотека axios автоматически устанавливает правильный Content-Type
         });

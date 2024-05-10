@@ -18,6 +18,7 @@
       <TaskDetails
       v-if="selectedTask"
       :task="selectedTask"
+      :files="selectedTaskDocuments"
       @file-uploaded="handleFileUploaded"
       :update-task-data="updateTaskData"
       @update="loadTasks" />
@@ -101,12 +102,13 @@ export default {
       this.showConfirmationDialog = false;
       this.selectedTaskId = null;
     },
-    selectTask(task) {
+    async selectTask(task) {
       this.selectedTask = task;
+      await this.fetchDocuments(task.id);
     },
     async handleFileUploaded(file) {
       try {
-        await this.$store.dispatch('mTask/uploadDocument', { file, taskId: this.selectedTask.id });
+        await this.$store.dispatch('mTask/uploadDocument', { file, taskData: {taskId: this.selectedTask.id, number: "4551"} });
       } catch (error) {
         console.error('Ошибка при загрузке файла:', error);
       }
@@ -123,7 +125,17 @@ export default {
       } catch (error) {
         console.error('Ошибка при сохранении изменений задачи:', error);
       }
-    }
+    },
+    async fetchDocuments(taskId) {
+      try {
+        console.log(taskId);
+        const response = await this.$store.dispatch('mDocument/getDocumentsByTaskId', { taskId: taskId });
+        console.log(response);
+        this.selectedTaskDocuments = response; // Сохраняем данные о документах
+      } catch (error) {
+        console.error('Ошибка при получении списка документов:', error);
+      }
+    },
   }
 };
 </script>

@@ -3,6 +3,7 @@ import { createStore } from 'vuex'
 import mReq from '../request/modules/mReq';
 import mTask from '../request/modules/mTask';
 import mAuth from '@/request/modules/mAuth';
+import mDocument from '@/request/modules/mDocument';
 
 const store = createStore({
   modules: {
@@ -14,6 +15,9 @@ const store = createStore({
     },
     mAuth: {
       ...mAuth
+    },
+    mDocument: {
+      ...mDocument
     }
   }
 });
