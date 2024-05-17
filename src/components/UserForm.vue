@@ -1,33 +1,28 @@
 <template>
-    <div class="button-container">
-      <button class="send-button" @click="sendPostRequest">Создать карточку</button>
+    <div class="button-workgroup">
+      <button class="add-workgroup" @click="addWorkGroup">Добавиться в группу</button>
     </div>
   </template>
   
   <script>
   export default {
-    data() {
-      return {
-        taskData: ''
-      }
-    },
     methods: {
-      sendPostRequest() {
-        this.$emit('create-task', this.taskData);
+      addWorkGroup() {
+        this.$emit('add-group');
       }
     }
   }
   </script>
   
   <style scoped>
-  .button-container {
+  .button-workgroup {
     position: fixed;
     bottom: 0;
-    left: 0;
+    right: 0;
     padding: 20px; /* Убираем фиксированную ширину */
   }
   
-  .send-button {
+  .add-workgroup {
     width: 200px; /* Устанавливаем фиксированную ширину */
     padding: 15px;
     border: none;

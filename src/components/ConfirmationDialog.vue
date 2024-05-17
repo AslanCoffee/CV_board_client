@@ -3,7 +3,7 @@
     <div class="dialog-content">
       <h3>Выберите новый статус</h3>
       <select v-model="selectedStatus">
-        <option v-for="status in statusOptions" :key="status">{{ status }}</option>
+        <option v-for="status in options" :key="status">{{ status }}</option>
       </select>
       <button @click="confirmStatus">Подтвердить</button>
       <button @click="cancel">Отмена</button>
@@ -15,8 +15,8 @@
 export default {
   props: {
     show: Boolean,
-    statusOptions: Array,
-    taskId: Number
+    options: Array,
+    objectId: Number
   },
   data() {
     return {

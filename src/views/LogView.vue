@@ -1,11 +1,11 @@
 <template>
-  <div>
+  <div class="container">
     <!-- Регистрация -->
     <div v-if="!isLoggedIn">
       <h2>Регистрация</h2>
       <form @submit.prevent="register">
         <div>
-          <label for="registerUsername">email:</label>
+          <label for="registerUsername">Email:</label>
           <input type="text" id="registerUsername" v-model="registerData.email" required>
         </div>
         <div>
@@ -21,19 +21,19 @@
       <h2>Авторизация</h2>
       <form @submit.prevent="login">
         <div>
-          <label for="loginUsername">email:</label>
-          <input type="text" id="email" v-model="loginData.email" required>
+          <label for="loginUsername">Email:</label>
+          <input type="text" id="loginUsername" v-model="loginData.email" required>
         </div>
         <div>
           <label for="loginPassword">Пароль:</label>
-          <input type="password" id="password" v-model="loginData.password" required>
+          <input type="password" id="loginPassword" v-model="loginData.password" required>
         </div>
         <button type="submit">Войти</button>
       </form>
     </div>
 
     <!-- Сообщение об успешной авторизации -->
-    <div>
+    <div v-if="isLoggedIn">
       <h2>Вы вошли в систему!</h2>
       <button @click="logout">Выйти</button>
     </div>
@@ -70,7 +70,7 @@ export default {
     async login() {
       try {
         await this.$store.dispatch('mAuth/logIn', { logInData: this.loginData });
-        this.isLoggedIn = true; 
+        this.isLoggedIn = true;
         alert('Вы успешно вошли в систему!');
         //await this.$store.dispatch('mAuth/authenticate');
       } catch (error) {
@@ -81,7 +81,7 @@ export default {
     async logout() {
       try {
         await this.$store.dispatch('mAuth/logOut');
-        this.isLoggedIn = false; 
+        this.isLoggedIn = false;
         alert('Вы успешно вышли из системы.');
       } catch (error) {
         console.error('Ошибка при выходе из системы:', error);
@@ -135,20 +135,5 @@ button {
 
 button:hover {
   background-color: #0056b3;
-}
-
-.alert {
-  margin-top: 20px;
-  padding: 10px;
-  border-radius: 3px;
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
-  color: #721c24;
-}
-
-.alert-danger {
-  background-color: #f8d7da;
-  border-color: #f5c6cb;
-  color: #721c24;
 }
 </style>

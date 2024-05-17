@@ -12,7 +12,7 @@ interface TaskPayload {
 export default {
   actions: {
     async createTask(context: ActionContext<any, any>, payload: TaskPayload) {
-      return mReq.actions.sendRequest(context, { url: '/tasks', method: 'POST', data: payload.taskData });
+      return mReq.actions.sendRequest(context, { url: '/tasks', method: 'POST', data: payload});
     },
     async getAll(context: ActionContext<any, any>, payload: TaskPayload) {
       return mReq.actions.sendRequest(context, { url: `/tasks/all`, method: 'GET' });
@@ -48,7 +48,10 @@ export default {
         console.error('Ошибка при загрузке файла:', error);
         throw error;
       }
-    }
+    },
+    async addWorkGroup(context: ActionContext<any, any>, payload: number) {//мб стоит сделать отдельный mWorkGroup, но смысла особо не вижу ради одной команды
+      return mReq.actions.sendRequest(context, { url: `/workgroup/add-user`, method: 'POST', data: {taskId: payload} });
+    },
   },
   namespaced: true
 };

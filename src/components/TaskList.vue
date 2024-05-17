@@ -7,7 +7,6 @@
         class="task-item"
         @click="showTaskDetails(task)"
       >
-        {{ task.id }} - {{ task.name }} - {{ task.statusStage }}
       </div>
     </div>
 

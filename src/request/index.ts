@@ -1,9 +1,10 @@
 import { createApp } from 'vue'
 import { createStore } from 'vuex'
-import mReq from '../request/modules/mReq';
-import mTask from '../request/modules/mTask';
+import mReq from './modules/mReq';
+import mTask from './modules/mTask';
 import mAuth from '@/request/modules/mAuth';
 import mDocument from '@/request/modules/mDocument';
+import mUsers from './modules/mUsers';
 
 const store = createStore({
   modules: {
@@ -18,6 +19,9 @@ const store = createStore({
     },
     mDocument: {
       ...mDocument
+    },
+    mUsers: {
+      ...mUsers
     }
   }
 });

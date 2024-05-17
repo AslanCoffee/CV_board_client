@@ -3,11 +3,13 @@
     <div>
       {{ task.id }} - {{ task.name }} - {{ task.statusStage }}
     </div>
-    <button class="status-button" @click="openConfirmationDialog(task.id)">статус</button>
+    <button class="status-button" @click="openConfirmationDialog(task.id)">Сменить статус</button>
   </div>
 </template>
 
 <script>
+import Axios from 'axios';
+
 export default {
   props: {
     task: Object
@@ -18,6 +20,16 @@ export default {
     },
     handleClick() {
       this.$emit('update-task', this.task);
+    },
+    async workGroupList() {
+      try {
+        const res = await Axios.get(`${process.env.VUE_APP_BACKEND_URL}workgroup/${this.task.id}`);
+        const response = await res.data;
+        console.log(res);
+        console.log(response);
+      } catch (error) {
+        console.error('Ошибка при загрузке данных:', error);
+      }
     }
   }
 }
