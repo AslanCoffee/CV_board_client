@@ -24,12 +24,17 @@
   
   .add-workgroup {
     width: 200px; /* Устанавливаем фиксированную ширину */
+    font-family:  'Montserrat Alternates', sans-serif;
     padding: 15px;
     border: none;
-    background-color: #4CAF50;
-    color: white;
+    background-color: #ffd300;
+    color: black;
     font-size: 16px;
     cursor: pointer;
+  }
+  
+  .add-workgroup:hover {
+    background-color: #b49600;
   }
   </style>
   

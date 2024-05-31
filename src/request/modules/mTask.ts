@@ -7,6 +7,7 @@ interface TaskPayload {
   id?: number;
   newStatus?: string;
   file?: File;
+  fileName?: string;
 }
 
 export default {
@@ -14,8 +15,14 @@ export default {
     async createTask(context: ActionContext<any, any>, payload: TaskPayload) {
       return mReq.actions.sendRequest(context, { url: '/tasks', method: 'POST', data: payload});
     },
-    async getAll(context: ActionContext<any, any>, payload: TaskPayload) {
+    async getAll(context: ActionContext<any, any>) {
       return mReq.actions.sendRequest(context, { url: `/tasks/all`, method: 'GET' });
+    },
+    async getCreatedTask(context: ActionContext<any, any>) {
+      return mReq.actions.sendRequest(context, { url: `/tasks/user/created-tasks`, method: 'GET' });
+    },
+    async getWorkGroupTask(context: ActionContext<any, any>) {
+      return mReq.actions.sendRequest(context, { url: `/tasks/user/workgroups-tasks`, method: 'GET' });
     },
     async getTaskById(context: ActionContext<any, any>, payload: TaskPayload) {
       return mReq.actions.sendRequest(context, { url: `/tasks/${payload.id}`, method: 'GET' });
@@ -36,6 +43,7 @@ export default {
       const formData = new FormData();
       formData.append('file', payload.file);
       formData.append('number', payload.taskData.number);
+      formData.append('fileName', payload.taskData.fileName);
       formData.append('taskId', payload.taskData.taskId);
       try {
         const response = await mReq.actions.sendRequest(context, {

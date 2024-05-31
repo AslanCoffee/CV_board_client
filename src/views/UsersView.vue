@@ -1,11 +1,16 @@
 <template>
+  <div class="head">
+    {{ this.userName }}
+    <button @click="this.$router.push({name: 'main'})">Главная</button>
+    <button class="logout-button" @click="logOut">Exit</button>
+  </div>
   <div class="user-container">
     <!-- Поисковая панель -->
     <div class="search-panel">
-      <input type="text" v-model="searchQuery" placeholder="Поиск...">
       <div class="filter-buttons">
+        <input type="text" v-model="searchQuery" placeholder="Поиск...">
         <button v-for="role in roleOptions" :key="role" @click="filterByRole(role)" :class="{ active: selectedRole === role }">{{ role }}</button>
-        <button @click="filterByRole('')">All</button>
+        <button @click="filterByRole('')">Все</button>
       </div>
     </div>
 
@@ -16,6 +21,7 @@
           v-for="user in filteredUsers"
           :key="user.id"
           :user="user"
+          @update="loadUsers"
           @click.prevent="selectUser(user)"
           @open-confirmation-dialog="openConfirmationDialog"
         />
@@ -30,7 +36,18 @@
         :update-user-data="updateUserData"
         @update="loadUsers"
         @history-list="historyList"/>
-      <History :history="history"/>
+        
+        <div id="chart">
+          <ChartComponent
+          v-if="selectedUser"
+          :user="selectedUser"
+          />
+
+      <History
+      class="user-history"
+      :history="history"
+      :userList="userList"
+      />
     </div>
 
     <ConfirmationDialog
@@ -40,7 +57,15 @@
       @confirm="confirmRole"
       @cancel="cancelRole"
     />
+
+    <UserCreate
+    @user-create="userCreate"
+    />
+
+    </div>
+
   </div>
+
 </template>
 
 <script>
@@ -49,6 +74,9 @@ import UserDetails from '../components/UserDetails.vue';
 import Axios from 'axios';
 import ConfirmationDialog from '../components/ConfirmationDialog.vue'
 import History from '../components/HistoryTask.vue';
+import UserCreate from '../components/UserCreate.vue';
+import store from '../request/index';
+import ChartComponent from '../components/apextest.vue';
 
 export default {
   components: {
@@ -56,6 +84,8 @@ export default {
     UserDetails,
     ConfirmationDialog,
     History,
+    UserCreate,
+    ChartComponent,
   },
   data() {
     return {
@@ -63,15 +93,19 @@ export default {
       showConfirmationDialog: false,
       selectedUser: null,
       selectedUserId: null,
-      roleOptions: ['EMPLOYEE', 'MANAGER', 'ADMIN'],
+      roleOptions: ['Работник', 'Руководитель', 'Администратор'],
       searchPerformed: false,
       searchQuery: '',
       selectedRole: '',
       history: [],
+      userList: [],
+      userName: '',
     };
   },
   mounted() {
     this.loadUsers();
+    const user = store.getters['mAuth/user'];
+    this.userName = user.name;
   },
   computed: {
     sortedTasks() {
@@ -88,7 +122,7 @@ export default {
                                    (user.department && user.department.toLowerCase().includes(query)) ||
                                    (user.role && user.role.toLowerCase().includes(query)) ||
                                    (user.email && user.email.toLowerCase().includes(query));
-                                   const matchesRole = !this.selectedRole || user.role === this.selectedRole;
+                                   const matchesRole = !this.selectedRole || user.role === this.getRoleDisplayValue(this.selectedRole);
         return matchesSearchQuery && matchesRole;
     });
     }
@@ -122,8 +156,6 @@ export default {
       else this.searchPerformed = true;
     },
     filterByRole(role) {
-      console.log(this.selectedRole);
-      console.log(role);
       this.selectedRole = role;
       this.searchPerformed = true;
     },
@@ -151,8 +183,39 @@ export default {
       try {
         const res = await Axios.get(`${process.env.VUE_APP_BACKEND_URL}history/user/${this.selectedUser.id}`);
         this.history = await res.data;
+        this.userList = [this.selectedUser];
       } catch (error) {
         console.error('Ошибка при загрузке данных:', error);
+      }
+    },
+    getRoleDisplayValue(status) {
+      switch (status) {
+        case 'Работник':
+          return 'EMPLOYEE';
+        case 'Менеджер':
+          return 'MANAGER';
+        case 'Администратор':
+          return 'ADMIN';
+        default:
+          return status; // Вернуть исходное значение, если неизвестный статус
+      }
+    },
+    async userCreate(createUserData) {
+      try {
+        await this.$store.dispatch('mAuth/createUser', { createUserData: createUserData });
+        console.log('Регистрация прошла успешно!');
+      } catch (error) {
+        console.error('Ошибка при регистрации:', error);
+      }
+    },
+    async logOut() {
+      try {
+        await this.$store.dispatch('mAuth/logOut');
+        this.$router.push({ name: 'log' });
+        alert('Вы успешно вышли из системы.');
+      } catch (error) {
+        console.error('Ошибка при выходе из системы:', error);
+        alert('Ошибка при выходе из системы. Пожалуйста, попробуйте снова.');
       }
     },
   }
@@ -160,11 +223,19 @@ export default {
 </script>
 
 <style>
+
+.logout-button {
+  position: absolute;
+  right: 30px;
+}
+
 .user-container {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  margin: 20px;
+  background-color: #45474c;
+  border-radius: 5px;
+  padding: 20px;
 }
 
 .search-panel {
@@ -181,10 +252,16 @@ export default {
   max-height: 600px; /* Ограничиваем высоту списка, чтобы активировать прокрутку при необходимости */
   overflow-y: auto; /* Включаем вертикальную прокрутку по мере необходимости */
   padding-right: 10px; /* Добавляем небольшой отступ справа для избежания наложения прокрутки на контент */
+  min-width: 500px;
 }
 
 .user-details {
   flex: 1;
   margin-left: 20px;
 }
+
+.user-history {
+  margin-left: 20px;
+}
+
 </style>

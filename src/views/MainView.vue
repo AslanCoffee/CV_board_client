@@ -1,17 +1,30 @@
 <template>
+  <div class="head">
+    <button @click="toggleFilter">Фильтры</button>
+    {{ this.userName }}
+    <button class="group-filter" :class="{ active: taskOptions === 'all' }" @click="setActiveFilter('all')">Все</button>
+    <button class="group-filter" :class="{ active: taskOptions === 'created' }" @click="setActiveFilter('created')">Мои</button>
+    <button class="group-filter" :class="{ active: taskOptions === 'workgroup' }" @click="setActiveFilter('workgroup')">Избранные</button>
+    <button v-if="visibleRole()" @click="this.$router.push({ name: 'users' })">Пользователи</button>
+    <button class="logout-button" @click="logOut">Exit</button>
+  </div>
   <div class="container">
     <!-- Список задач слева -->
-    <div class="filter-buttons">
-      <input type="text" v-model="searchQuery" @keyup.enter="performSearch" placeholder="Поиск..." />
-      <button v-for="status in statusOptions" :key="status" @click="filterByStatus(status)" :class="{ active: selectedStatus === status }">{{ status }}</button>
-      <button @click="filterByStatus('')">All</button>
-    </div>
+    <transition name="slide">
+      <div class="filter-buttons" v-if="showFilter">
+        <input type="text" v-model="searchQuery" @keyup.enter="performSearch" placeholder="Поиск..." />
+        <button v-for="status in statusOptions" :key="status" @click="filterByStatus(status)" :class="{ active: selectedStatus === status }">{{ status }}</button>
+        <button @click="filterByStatus('')">Все</button>
+      </div>
+    </transition>
     <div class="task-list-container">
       <div class="task-list" id="task-list">
         <TaskItem
           v-for="task in sortedTasks"
           :key="task.id"
           :task="task"
+          :userRole="userRole"
+          @update="loadTasks" 
           @click.prevent="selectTask(task)"
           @open-confirmation-dialog="openConfirmationDialog"
         />
@@ -24,16 +37,19 @@
       ref="taskDetailsRef"
       v-if="selectedTask"
       :task="selectedTask"
+      :activeTab="activeTab"
       :files="selectedTaskDocuments"
       :update-task-data="updateTaskData"
-      @file-uploaded="handleFileUploaded"
-      @file-downloaded="downloadFile"
+      @active-tab="setActiveTab"
       @history-list="historyList"
       @update="loadTasks" />
       <History
+      v-if="selectedTask && activeTab === 'history'"
       :history="history"
+      :userList="users"
       />
     </div>
+
 
     <TaskCreate @create-task="createTask" />
 
@@ -41,7 +57,6 @@
     <ConfirmationDialog
       :show="showConfirmationDialog"
       :options="statusOptions"
-      :objectId="selectedTaskId"
       @confirm="confirmStatus"
       @cancel="cancelStatus"
     />
@@ -53,11 +68,10 @@
 import TaskItem from '../components/TaskItem.vue';
 import TaskDetails from '../components/TaskDetails.vue';
 import ConfirmationDialog from '../components/ConfirmationDialog.vue';
-//import UserForm from '../components/UserForm.vue';
 import TaskCreate from '../components/TaskCreate.vue';
 import Axios from 'axios';
 import History from '../components/HistoryTask.vue';
-
+import store from '../request/index';
 
 export default {
   components: {
@@ -71,14 +85,19 @@ export default {
     return {
       tasks: [],
       showConfirmationDialog: false,
-      statusOptions: ['CREATE', 'AGREEMENT', 'COLLECT', 'DONE', 'CANCEL', 'REWORK', 'DELETED'],
+      statusOptions: ['Создан', 'Согласован', 'В сборке', 'Выполнен', 'Отказ', 'Доработать', 'Удалён'],
       selectedTask: null,
       selectedTaskId: null,
       searchQuery: '',
       searchPerformed: false,
       history: [],
+      users: [],
       selectedStatus: '',
-      userRole: 'EMPLOYEE',
+      activeTab: 'workgroup',
+      taskOptions: 'all',
+      userName: '',
+      userRole: '',
+      showFilter: false,
     };
   },
   computed: {
@@ -95,22 +114,49 @@ export default {
         const matchesSearchQuery = (task.name && task.name.toLowerCase().includes(query)) ||
                                    (task.email && task.email.toLowerCase().includes(query)) ||
                                    (task.phone && task.phone.toLowerCase().includes(query)) ||
+                                   (task.createDate && task.createDate.includes(query)) ||
                                    (task.statusStage && task.statusStage.toLowerCase().includes(query)) ||
                                    (task.jobTitle && task.jobTitle.toLowerCase().includes(query)) ||
                                    (task.description && task.description.toLowerCase().includes(query));
-        const matchesStatus = !this.selectedStatus || task.statusStage === this.selectedStatus;
+        const matchesStatus = !this.selectedStatus || task.statusStage === this.getStatusDisplayValue(this.selectedStatus);
         return matchesSearchQuery && matchesStatus;
     });
     }
   },
   mounted() {
-    this.loadTasks();
+    this.loadTasks('all');
+    const user = store.getters['mAuth/user'];
+    this.userName = user.name;
+    this.userRole = user.role;
   },
   methods: {
-    async loadTasks() {
+    async loadTasks(options) {
       try {
-        const response = await this.$store.dispatch('mTask/getAll');
-        this.tasks = await response;
+        switch(options){
+          case 'created':
+            {
+              this.taskOptions = 'created'
+              const res = await this.$store.dispatch('mTask/getCreatedTask');
+              this.tasks = await res;
+              break;
+            }
+          case 'workgroup':
+            {
+              this.taskOptions = 'workgroup'
+              const res = await this.$store.dispatch('mTask/getWorkGroupTask');
+              this.tasks = await res;
+              break;
+            }
+          case 'all':
+            {
+              this.taskOptions = 'all'
+              const res = await Axios.get(`${process.env.VUE_APP_BACKEND_URL}tasks/all`);
+              this.tasks = await res.data;
+              break;
+            }
+          default:
+            this.loadTasks(this.taskOptions)
+        }
       } catch (error) {
         console.error('Ошибка при загрузке задач:', error);
       }
@@ -118,7 +164,7 @@ export default {
     async createTask(data) {
       try {
         await this.$store.dispatch('mTask/createTask', data);
-        await this.loadTasks();
+        await this.loadTasks(this.taskOptions);
       } catch (error) {
         console.error('Ошибка при отправке POST запроса:', error);
       }
@@ -131,7 +177,7 @@ export default {
       try {
         if (this.selectedTaskId !== null) {
           await this.$store.dispatch('mTask/changeTaskStatus', { id: this.selectedTaskId, newStatus: selectedStatus });
-          await this.loadTasks();
+          await this.loadTasks(this.taskOptions);
           this.historyList();
           this.showConfirmationDialog = false;
           this.selectedTaskId = null;
@@ -148,14 +194,6 @@ export default {
       await this.fetchDocuments(task.id);
       this.selectedTask = task;
       this.historyList();
-    },
-    async handleFileUploaded(file) {
-      try {
-        await this.$store.dispatch('mTask/uploadDocument', { file, taskData: {taskId: this.selectedTask.id, number: "4551"} });
-        this.historyList();
-      } catch (error) {
-        console.error('Ошибка при загрузке файла:', error);
-      }
     },
     async updateTaskData({ id, editedTask }) {
       try {
@@ -177,36 +215,39 @@ export default {
         console.error('Ошибка при получении списка документов:', error);
       }
     },
-    async downloadFile(fileId) {
-      try {   
-        const response = await Axios.get(`${process.env.VUE_APP_BACKEND_URL}documents/download/${fileId.id}`, {
-          responseType: 'blob',
-        });
-        const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `${fileId.url}`); // Установите имя файла для скачивания
-        document.body.appendChild(link);
-        link.click();
-      } catch (error) {
-        console.error('Ошибка при загрузке файла:', error);
-      }
-    },
     async historyList() {
       try {
         const res = await Axios.get(`${process.env.VUE_APP_BACKEND_URL}history/task/${this.selectedTask.id}`);
         this.history = await res.data;
+        const response = await Axios.get(`${process.env.VUE_APP_BACKEND_URL}workgroup/find/${this.selectedTask.id}`);
+        this.users = await response.data;
       } catch (error) {
         console.error('Ошибка при загрузке данных:', error);
       }
     },
-    // async historyNames() {
-    //   try {
-    //     const res = await Axios.get(`${process.env.VUE_APP_BACKEND_URL}history/task/${this.selectedTask.id}`);
-    //   } catch (error) {
-    //     console.error('Ошибка при загрузке данных:', error);
-    //   }
-    // },
+    getStatusDisplayValue(status) {
+      switch (status) {
+        case 'Согласован':
+          return 'AGREEMENT';
+        case 'Создан':
+          return 'CREATE';
+        case 'В сборке':
+          return 'COLLECT';
+        case 'Выполнен':
+          return 'DONE';
+        case 'Отказ':
+          return 'CANCEL';
+        case 'Доработать':
+          return 'REWORK';
+        case 'Удалён':
+          return 'DELETED';
+        default:
+          return status; // Вернуть исходное значение, если неизвестный статус
+      }
+    },
+    setActiveTab(tab) {
+      this.activeTab = tab;
+    },
     performSearch() {
       if (this.searchPerformed === true) this.searchPerformed = false;
       else this.searchPerformed = true;
@@ -215,28 +256,84 @@ export default {
       this.showTaskCreate = true;
     },
     filterByStatus(status) {
-      console.log(this.selectedStatus);
-      console.log(status);
       this.selectedStatus = status;
       this.searchPerformed = true;
+    },
+    async logOut() {
+      try {
+        await this.$store.dispatch('mAuth/logOut');
+        this.$router.push({ name: 'log' });
+        alert('Вы успешно вышли из системы.');
+      } catch (error) {
+        console.error('Ошибка при выходе из системы:', error);
+        alert('Ошибка при выходе из системы. Пожалуйста, попробуйте снова.');
+      }
+    },
+    visibleRole(){
+      if(this.userRole==='MANAGER' || this.userRole==='ADMIN') return true;
+      else return false;
+    },
+    toggleFilter() {
+      this.showFilter = !this.showFilter;
+    },
+    setActiveFilter(filter) {
+      this.taskOptions = filter;
+      this.loadTasks(filter);
     },
   }
 };
 </script>
 
 <style>
+html, body {
+  height: 100%;
+  margin: 0; /* Убираем отступы */
+  background-color: #45474c; /* Цвет фона */
+  color: #fff;
+}
+
+.head {
+  padding: 30px;
+  text-align: left;
+}
+
+.head button {
+  margin-top: 0px;
+  font-size: 15px;
+}
+
+.group-filter.active {
+  background-color: white;
+  color: black;
+}
+
+.logout-button {
+  position: absolute;
+  right: 30px;
+}
+
+
 .container {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: flex-start;
   margin: 20px;
+  margin-bottom: 40px; /* Добавлено пространство снизу */
+  height: calc(100% - 60px); /* Учитываем margin */
+  background-color: #45474c; /* Цвет фона */
 }
 
 .filter-buttons {
+  font-family:  'Montserrat Alternates', sans-serif;
   display: flex;
   flex-direction: column;
   margin-right: 20px;
+  background-color: #45474c;
+}
+
+.filter-buttons :hover{
+  background-color: #adadad;
 }
 
 .filter-buttons input[type="text"] {
@@ -245,15 +342,18 @@ export default {
   font-size: 14px;
   border: 1px solid #ccc;
   border-radius: 5px;
+  background-color: white; /* Цвет фона ввода */
+  color: black; /* Белый цвет шрифта ввода */
 }
 
 .filter-buttons button {
   margin-bottom: 10px;
   padding: 10px;
+  font-family:  'Montserrat Alternates', sans-serif;
   font-size: 14px;
   cursor: pointer;
-  background-color: #007bff;
-  color: #fff;
+  background-color: white;
+  color: black;
   border: none;
   border-radius: 5px;
 }
@@ -263,38 +363,57 @@ export default {
 }
 
 .filter-buttons button.active {
-  background-color: #0056b3;
+  background-color: #ffd300;
 }
 
 .task-list-container {
   flex: 1;
   overflow-y: auto;
-  max-height: 600px;
+  max-height: calc(100vh - 80px); /* Учитываем высоту родительского контейнера и margin */
+  color: #212327;
+}
+
+/* Width */
+.task-list-container::-webkit-scrollbar {
+  width: 8px;
+  border-radius: 5px solid #ccc;
+}
+
+/* Thumb */
+.task-list-container::-webkit-scrollbar-thumb {
+  background: #ffd300;
+  border-radius: 5px;
 }
 
 .task-list {
+  height: 80vh;
   width: 100%;
 }
 
 .task-details {
   flex: 1;
   margin-left: 20px;
+  background-color: #686868;
+  border-radius: 5px;
+  color: white;
+  max-width: 500px;
 }
 
 .task-list .task-item {
   margin-bottom: 10px;
   padding: 10px;
-  background-color: #f5f5f5;
+  background-color: white;
   border-radius: 5px;
   cursor: pointer;
+  color: black;
 }
 
 .task-list .task-item:hover {
-  background-color: #e5e5e5;
+  background-color: rgb(198, 198, 198);
 }
 
 .task-list .task-item.selected {
-  background-color: #d4d4d4;
+  background-color: #505050;
 }
 
 .task-list .task-item h3 {
@@ -305,10 +424,6 @@ export default {
 .task-list .task-item p {
   margin: 5px 0;
   font-size: 14px;
-}
-
-.task-details {
-  margin-top: 20px;
 }
 
 .task-details .task-detail {
@@ -335,13 +450,14 @@ export default {
 
 .task-details .file-list .file-item a {
   text-decoration: none;
-  color: #007bff;
+  color: #e5ff00;
   font-size: 14px;
 }
 
 .task-details .file-list .file-item a:hover {
   text-decoration: underline;
 }
+
 
 .task-create {
   margin-top: 20px;
@@ -350,4 +466,9 @@ export default {
 .confirmation-dialog {
   margin-top: 20px;
 }
+
+.slide-enter-active, .slide-leave-active {
+  transition: transform ease;
+}
+
 </style>

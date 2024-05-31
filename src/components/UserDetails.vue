@@ -13,8 +13,9 @@
     <div v-else>
       <!-- Режим просмотра -->
       <div v-for="field in fields" :key="field.key">
-        <label :for="field.key">{{ field.label }}</label>
+        <label :for="field.key">{{ field.label }}
         <span>{{ user[field.key] }}</span>
+      </label>
       </div>
       <button @click="toggleEditMode">Редактировать</button>
     </div>
@@ -70,8 +71,9 @@ export default {
 
 <style scoped>
 .user-details {
-  margin-left: 20px;
+  color: white;
   padding: 20px;
-  border: 1px solid #ccc;
+  background-color: #686868;
+  border-start-start-radius: 5px;
 }
 </style>

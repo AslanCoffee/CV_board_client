@@ -7,6 +7,7 @@ interface UserPayload {
     newRole?: string;
     file?: File;
     taskId?: number;
+    options?: string;
   }
 
 export default {
@@ -28,10 +29,16 @@ export default {
         return mReq.actions.sendRequest(context, { url: `/users/${payload.id}`, method: 'DELETE' });
       },
       async groupUsers(context: ActionContext<any, any>, payload: UserPayload) {
-        return mReq.actions.sendRequest(context, { url: `/users/find/aslan/${payload}`, method: 'GET' });
+        return mReq.actions.sendRequest(context, { url: `/users/find/group/${payload}`, method: 'GET' });
       },
       async changeRole(context: ActionContext<any, any>, payload: UserPayload) {
         return mReq.actions.sendRequest(context, { url: '/users/role', method: 'PATCH', data: { id: payload.id, role: payload.newRole } });
+      },
+      async userHistoryEdit(context: ActionContext<any, any>, payload: UserPayload) {
+        return mReq.actions.sendRequest(context, { url: `/history/${payload.id}/keywords`, method: 'GET' });
+      },
+      async userHistoryMany(context: ActionContext<any, any>, payload: UserPayload) {
+        return mReq.actions.sendRequest(context, { url: `/history/${payload.id}/${payload.options}`, method: 'GET' });
       },
     },
     namespaced: true

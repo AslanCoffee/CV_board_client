@@ -1,17 +1,33 @@
 <template>
   <div class="task-create">
     <!-- Кнопка открытия модального окна -->
-    <button class="open-button" @click="openModal">Открыть форму</button>
+    <button class="open-button" @click="openModal">Создать карточку</button>
 
     <!-- Модальное окно -->
     <div v-if="showModal" class="modal">
       <div class="modal-content">
         <!-- Поля ввода для данных -->
-        <input type="text" v-model="name" placeholder="Название задачи" />
-        <input type="text" v-model="email" placeholder="Email" />
-        <input type="text" v-model="phone" placeholder="Телефон" />
-        <input type="text" v-model="jobTitle" placeholder="Должность" />
-        <textarea v-model="description" placeholder="Описание"></textarea>
+        <div class="input-container">
+          <input type="text" v-model="name" placeholder="ФИО" />
+        </div>
+        <div class="input-container">
+          <input type="text" v-model="email" placeholder="Email" />
+        </div>
+        <div class="input-container">
+          <input type="text" v-model="phone" placeholder="Телефон" />
+        </div>
+        <div class="input-container">
+          <input type="text" v-model="jobTitle" placeholder="Должность" />
+        </div>
+        <div class="input-container">
+          <input type="text" v-model="urlCV" placeholder="Ссылка на резюме" />
+        </div>
+        <div class="input-container">
+          <input type="text" v-model="srcCV" placeholder="Источник" />
+        </div>
+        <div class="input-container">
+          <textarea v-model="description" placeholder="Описание"></textarea>
+        </div>
 
         <!-- Кнопки Сохранить и Отменить -->
         <div class="button-container">
@@ -44,7 +60,9 @@ export default {
       email: '',
       phone: '',
       jobTitle: '',
-      description: ''
+      description: '',
+      urlCV: '',
+      srcCV: '',
     };
   },
   methods: {
@@ -64,7 +82,9 @@ export default {
         email: this.email,
         phone: this.phone,
         jobTitle: this.jobTitle,
-        description: this.description
+        description: this.description,
+        urlCV: this.urlCV,
+        srcCV: this.srcCV,
       });
       // Закрываем модальное окно
       this.showModal = false;
@@ -92,12 +112,14 @@ export default {
       this.phone = '';
       this.jobTitle = '';
       this.description = '';
+      this.urlCV = '';
+      this.srcCV = '';
     }
   }
 };
 </script>
 
-<style>
+<style scoped>
 /* Стили для модального окна */
 .modal {
   display: flex;
@@ -119,24 +141,37 @@ export default {
   max-width: 400px; /* Максимальная ширина модального окна */
   border-radius: 5px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Тень для модального окна */
+  display: flex;
+  flex-direction: column; /* Разместить элементы вертикально */
+}
+
+/* Стили для контейнеров полей ввода */
+.input-container {
+  margin-bottom: 15px; /* Отступ между полями */
+}
+
+textarea {
+  height: 100px; /* Увеличенная высота текстовой области */
+  resize: vertical; /* Позволяет изменять высоту текстовой области */
 }
 
 /* Стили для кнопки открытия модального окна */
 .open-button {
+  font-family:  'Montserrat Alternates', sans-serif;
   position: fixed;
   bottom: 20px;
   left: 20px;
   z-index: 1000;
   padding: 10px 20px;
-  background-color: #007bff;
-  color: #fff;
+  background-color: #ffd300;
+  color: black;
   border: none;
   border-radius: 5px;
   cursor: pointer;
 }
 
 .open-button:hover {
-  background-color: #0056b3;
+  background-color: #d6b302;
 }
 
 /* Стили для окна подтверждения отмены */
@@ -173,6 +208,7 @@ export default {
   border: none;
   border-radius: 5px;
   cursor: pointer;
+  font-family:  'Montserrat Alternates', sans-serif;
 }
 
 .save-button {

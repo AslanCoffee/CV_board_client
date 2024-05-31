@@ -4,9 +4,9 @@
       <div class="work-group" v-for="user in users" :key="user.id">
         <div class="work-group-header">
           <p class="user-name">{{ user.name }}</p>
-          <p class="department">Department: {{ user.department }}</p>
+          <p class="department">Отдел: {{ user.department }}</p>
         </div>
-        <p class="email">Email: {{ user.email }}</p>
+        <p class="email">Почта: {{ user.email }}</p>
       </div>
     </div>
   </div>
@@ -26,7 +26,7 @@ export default {
   max-width: 400px;
   margin: 0 auto;
   padding: 20px;
-  background-color: #f9f9f9;
+  background-color: #5d6064;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -38,17 +38,19 @@ export default {
 }
 
 .work-group {
-  background-color: #fff;
+  background-color: #3a3a3a;
+  color: white;
   border-radius: 8px;
   padding: 15px;
+  margin-top: auto;
   margin-bottom: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s;
 }
 
-.work-group:hover {
+/* .work-group:hover {
   transform: translateY(-5px);
-}
+} */
 
 .work-group-header {
   display: flex;
@@ -59,17 +61,17 @@ export default {
 
 .user-name {
   font-weight: bold;
-  color: #333;
+  color: #ffffff;
   font-size: 1.1em;
 }
 
 .department {
   font-size: 0.9em;
-  color: #666;
+  color: #d0d0d0;
 }
 
 .email {
   font-size: 0.9em;
-  color: #555;
+  color: #9e9e9e;
 }
 </style>

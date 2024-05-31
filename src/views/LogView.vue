@@ -1,91 +1,57 @@
 <template>
-  <div class="container">
-    <!-- Регистрация -->
-    <div v-if="!isLoggedIn">
-      <h2>Регистрация</h2>
-      <form @submit.prevent="register">
-        <div>
-          <label for="registerUsername">Email:</label>
-          <input type="text" id="registerUsername" v-model="registerData.email" required>
-        </div>
-        <div>
-          <label for="registerPassword">Пароль:</label>
-          <input type="password" id="registerPassword" v-model="registerData.password" required>
-        </div>
-        <button type="submit">Зарегистрироваться</button>
-      </form>
-    </div>
+  <div class="login-page">
+    <div class="head">
 
-    <!-- Авторизация -->
-    <div v-if="!isLoggedIn">
-      <h2>Авторизация</h2>
-      <form @submit.prevent="login">
-        <div>
-          <label for="loginUsername">Email:</label>
-          <input type="text" id="loginUsername" v-model="loginData.email" required>
-        </div>
-        <div>
-          <label for="loginPassword">Пароль:</label>
-          <input type="password" id="loginPassword" v-model="loginData.password" required>
-        </div>
-        <button type="submit">Войти</button>
-      </form>
     </div>
-
-    <!-- Сообщение об успешной авторизации -->
-    <div v-if="isLoggedIn">
-      <h2>Вы вошли в систему!</h2>
-      <button @click="logout">Выйти</button>
+    <div class="container">
+      <!-- Авторизация -->
+      <div class="block">
+        <h2>Авторизация</h2>
+        <form @submit.prevent="login">
+          <div>
+            <label for="loginUsername" class="login-from">Email:</label>
+            <input type="text" id="loginUsername" v-model="loginData.email" required>
+          </div>
+          <div>
+            <label for="loginPassword">Пароль:</label>
+            <input type="password" id="loginPassword" v-model="loginData.password" required>
+          </div>
+          <button type="submit">Войти</button>
+        </form>
+      </div>
     </div>
-  </div>
+</div>
 </template>
 
 <script>
-import { useStore } from 'vuex';
 
 export default {
   data() {
     return {
-      registerData: {
-        email: '',
-        password: ''
-      },
       loginData: {
         email: '',
         password: ''
       },
-      isLoggedIn: false
     };
   },
+  mounted() {
+    this.getLog();
+  },
   methods: {
-    async register() {
-      try {
-        await this.$store.dispatch('mAuth/register', { registrationData: this.registerData });
-        alert('Регистрация прошла успешно!');
-      } catch (error) {
-        console.error('Ошибка при регистрации:', error);
-        alert('Ошибка при регистрации. Пожалуйста, попробуйте снова.');
-      }
-    },
     async login() {
       try {
-        await this.$store.dispatch('mAuth/logIn', { logInData: this.loginData });
-        this.isLoggedIn = true;
-        alert('Вы успешно вошли в систему!');
-        //await this.$store.dispatch('mAuth/authenticate');
+        await this.$store.dispatch('mAuth/logIn', {logInData: this.loginData} );
+        this.$router.push({ name: 'main' });
       } catch (error) {
         console.error('Ошибка при авторизации:', error);
         alert('Ошибка при авторизации. Пожалуйста, попробуйте снова.');
       }
     },
-    async logout() {
+    async getLog() {
       try {
-        await this.$store.dispatch('mAuth/logOut');
-        this.isLoggedIn = false;
-        alert('Вы успешно вышли из системы.');
+        await this.$store.dispatch('mAuth/authenticate');
       } catch (error) {
-        console.error('Ошибка при выходе из системы:', error);
-        alert('Ошибка при выходе из системы. Пожалуйста, попробуйте снова.');
+        console.error('Ошибка Авторизации', error);
       }
     }
   }
@@ -93,17 +59,68 @@ export default {
 </script>
 
 <style>
-.container {
+
+.login-page .head {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.login-page .container {
   margin: 0 auto;
   padding: 20px;
-  border: 1px solid #ccc;
   border-radius: 5px;
-  background-color: #f9f9f9;
+  background-color: #45474c;
+  justify-content: center;
+}
+
+.login-page .block {
+  margin-top: 10%;
+}
+
+.login-page .auth-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.login-page label {
+  color: white;
+}
+
+.login-page input[type="text"],
+.login-page input[type="password"] {
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+
+.login-page button {
+  padding: 10px;
+  border: none;
+  border-radius: 3px;
+  background-color: #ffd300;
+  color: black;
+  cursor: pointer;
+}
+
+.login-page button:hover {
+  background-color: #bd9e00;
+}
+
+.container {
+  margin: 0 auto;
+  height: 84vh;
+  margin-bottom: 100px;
+  padding: 20px;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  background-color: #45474c;
 }
 
 h2 {
   font-size: 24px;
   margin-bottom: 20px;
+  color: white;
 }
 
 form {
@@ -113,27 +130,30 @@ form {
 
 label {
   margin-bottom: 5px;
+  color: white;
 }
 
 input[type="text"],
 input[type="password"] {
   padding: 8px;
   margin-bottom: 10px;
+  /*margin-right: 20px;*/
   border: 1px solid #ccc;
   border-radius: 3px;
 }
 
 button {
+  font-family:  'Montserrat Alternates', sans-serif;
   padding: 10px;
   margin-top: 10px;
   border: none;
   border-radius: 3px;
-  background-color: #007bff;
-  color: #fff;
+  background-color: #ffd300;
+  color: black;
   cursor: pointer;
 }
 
 button:hover {
-  background-color: #0056b3;
+  background-color: #bd9e00;
 }
 </style>
