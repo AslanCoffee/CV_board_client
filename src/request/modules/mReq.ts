@@ -7,7 +7,7 @@ interface RequestPayload {
   data?: any;
 }
 
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = 'http://192.168.0.105:3000';
 
 export default {
   actions: {

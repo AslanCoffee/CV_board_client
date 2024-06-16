@@ -73,6 +73,8 @@ import Axios from 'axios';
 import History from '../components/HistoryTask.vue';
 import store from '../request/index';
 
+const VUE_APP_BACKEND_URL = `http://localhost:3000/`;
+
 export default {
   components: {
     TaskItem,
@@ -125,6 +127,7 @@ export default {
   },
   mounted() {
     this.loadTasks('all');
+    console.log(process.env.VUE_APP_BACKEND_URL);
     const user = store.getters['mAuth/user'];
     this.userName = user.name;
     this.userRole = user.role;
