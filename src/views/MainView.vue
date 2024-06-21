@@ -31,7 +31,7 @@
       </div>
     </div>
     
-    <!-- Окно с информацией о выбранной задаче справа -->
+    <!-- Окно с информацией о выбранном резюме справа -->
     <div class="task-details">
       <TaskDetails
       ref="taskDetailsRef"
@@ -40,9 +40,13 @@
       :activeTab="activeTab"
       :files="selectedTaskDocuments"
       :update-task-data="updateTaskData"
+      :sStage="stage"
       @active-tab="setActiveTab"
       @history-list="historyList"
-      @update="loadTasks" />
+      @update="loadTasks"
+      @move-to-next-stage="confirmStatus"
+      @update-files="fetchDocuments"
+      />
       <History
       v-if="selectedTask && activeTab === 'history'"
       :history="history"
@@ -100,6 +104,7 @@ export default {
       userName: '',
       userRole: '',
       showFilter: false,
+      stage: '',
     };
   },
   computed: {
@@ -184,6 +189,7 @@ export default {
           this.historyList();
           this.showConfirmationDialog = false;
           this.selectedTaskId = null;
+          this.stage = selectedStatus;
         }
       } catch (error) {
         console.error('Ошибка при изменении статуса задачи:', error);
@@ -196,7 +202,9 @@ export default {
     async selectTask(task) {
       await this.fetchDocuments(task.id);
       this.selectedTask = task;
+      this.selectedTaskId = task.id;
       this.historyList();
+      this.stage = task.statusStage;
     },
     async updateTaskData({ id, editedTask }) {
       try {

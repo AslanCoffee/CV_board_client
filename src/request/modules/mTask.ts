@@ -8,6 +8,7 @@ interface TaskPayload {
   newStatus?: string;
   file?: File;
   fileName?: string;
+  name?: string;
 }
 
 export default {
@@ -44,6 +45,7 @@ export default {
       formData.append('file', payload.file);
       formData.append('number', payload.taskData.number);
       formData.append('fileName', payload.taskData.fileName);
+      formData.append('name', payload.taskData.name);
       formData.append('taskId', payload.taskData.taskId);
       try {
         const response = await mReq.actions.sendRequest(context, {

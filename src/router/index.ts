@@ -29,21 +29,20 @@ const router = createRouter({
   routes
 });
 
-// Глобальный передохранитель для проверки авторизации и ролей
-// router.beforeEach(async (to, from, next) => {
-//   await store.dispatch("mAuth/authenticate");
-//   const isAuthenticated = store.getters['mAuth/isAuthenticated'];
-//   const userRole = store.getters['mAuth/userRole'];
-//   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
-//   const requiredRole = to.meta.requiredRole;
+router.beforeEach(async (to, from, next) => {
+  await store.dispatch("mAuth/authenticate");
+  const isAuthenticated = store.getters['mAuth/isAuthenticated'];
+  const userRole = store.getters['mAuth/userRole'];
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+  const requiredRole = to.meta.requiredRole;
 
-//   if (requiresAuth && !isAuthenticated) {
-//     next({ name: 'log' }); // Перенаправление на страницу авторизации
-//   } else if (requiresAuth && requiredRole && userRole !== requiredRole) {
-//     next({ name: 'main' }); // Перенаправление на главную страницу, если роль не подходит
-//   } else {
-//     next(); // Продолжить навигацию
-//   }
-// });
+  if (requiresAuth && !isAuthenticated) {
+    next({ name: 'log' }); // Перенаправление на страницу авторизации
+  } else if (requiresAuth && requiredRole && userRole !== requiredRole) {
+    next({ name: 'main' }); // Перенаправление на главную страницу, если роль не подходит
+  } else {
+    next(); // Продолжить навигацию
+  }
+});
 
 export default router;

@@ -1,6 +1,6 @@
 <template>
   <div class="task-details">
-    <h2>Детали задачи</h2>
+    <h2>Детали резюме:</h2>
     <div>
       <template v-if="isEditing">
         <div v-for="field in editFields" :key="field.id" class="form-field">
@@ -10,12 +10,14 @@
         <div class="file-upload-section">
           <h3>Загруженные файлы:</h3>
           <ul class="file-list">
-            <li v-for="fileId in files" :key="fileId" class="file-item">
-              <a :href="`/files/${fileId}`" target="_blank" class="file-link">{{ getFileName(fileId.url) }}</a>
+            <li v-for="file in temporaryFiles" :key="file.id" class="file-item">
+              <input type="text" v-model="file.name" placeholder="Название" class="input">
+              <input type="text" v-model="file.number" placeholder="Номер" class="input">
+              <span>{{ file.fileName }}</span>
             </li>
           </ul>
           <label for="fileInput" class="file-input-label">Выберите файл:</label>
-          <input type="file" id="fileInput" @change="handleFileUpload" class="file-input">
+          <input type="file" id="fileInput" @change="handleFileSelection" class="file-input">
         </div>
         <div class="buttons">
           <button @click="saveChanges" class="save-button">Сохранить</button>
@@ -29,28 +31,35 @@
           </label>
         </div>
         <div class="status-section">
-          <label class="status-label">Статус: {{ getStatusDisplayValue(this.task.statusStage) }}</label>
+          <label class="status-label">Статус: {{ getStatusDisplayValue(this.taskStage) }}</label>
         </div>
         <button @click="toggleEditMode" class="edit-button">Редактировать</button>
         <h3>Загруженные файлы:</h3>
         <div v-if="files && files.length > 0" class="file-list">
           <ul>
-            <li v-for="fileId in files" :key="fileId" class="file-item">
-              <a :href="`${fileId}`" @click.prevent="downloadFileEvent(fileId)" class="file-link">{{ getFileName(fileId.url) }}</a>
+            <li v-for="file in taskFiles" :key="file.id" class="file-item">
+              <span>{{ file.name }}</span> - <span>{{ file.number }}</span> - <a :href="file.url" @click.prevent="downloadFileEvent(file.id)" class="file-link">{{ getFileName(file.url) }}</a>
             </li>
           </ul>
         </div>
+        <button @click="showConfirmModal" class="next-stage-button">Отправить на следующий этап</button>
         <div class="tab-buttons">
           <button class="tab-work" @click="setActiveTab('workgroup')" :class="{ active: activeTab === 'workgroup' }">Рабочая группа</button>
           <button class="tab-history" @click="setActiveTab('history')" :class="{ active: activeTab === 'history' }">История</button>
         </div>
       </template>
     </div>
-    <WorkGroup
-    v-if="activeTab === 'workgroup'"
-    :users="users"
-    />
+    <WorkGroup v-if="activeTab === 'workgroup'" :users="users" />
     <UserForm @click="addGroup" />
+
+    <ConfirmModal
+      :visible="isModalVisible"
+      title="Подтверждение"
+      message="Вы уверены, что хотите отправить задачу на следующий этап?"
+      @confirm="moveToNextStage"
+      @cancel="hideConfirmModal"
+    />
+
   </div>
 </template>
 
@@ -58,22 +67,28 @@
 import Axios from 'axios';
 import WorkGroup from './WorkGroup.vue';
 import UserForm from './UserForm.vue';
+import ConfirmModal from './ConfirmModal.vue';
 
 export default {
   components: {
     WorkGroup,
     UserForm,
+    ConfirmModal
   },
   props: {
     task: Object,
     updateTaskData: Function,
     files: Array,
     activeTab: String,
+    sStage: String,
   },
   data() {
     return {
       users: [],
       editedTask: {},
+      taskFiles: [],
+      taskStage: '',
+      isModalVisible: false,
       isEditing: false,
       editFields: [
         { id: 'taskName', label: 'ФИО:', type: 'text', key: 'name' },
@@ -101,25 +116,38 @@ export default {
       handler(newValue) {
         this.editedTask = { ...newValue };
         this.workGroupList();
+        this.taskStage = newValue.statusStage;
       },
       immediate: true 
     },
+    files: {
+      handler(newFiles){
+        this.taskFiles = {...newFiles };
+      },
+      immediate: true 
+    },
+    sStage: {
+      handler(newStatus){
+        this.taskStage = newStatus;
+      }
+    }
   },
   methods: {
     async saveChanges() {
       Object.assign(this.task, this.editedTask);
-      this.updateTaskData({ id: this.task.id, editedTask: this.editedTask });
-      this.isEditing = false;
-      
+
       if (this.temporaryFiles.length > 0) {
         for (const file of this.temporaryFiles) {
           await this.uploadFile(file);
         }
-        this.temporaryFiles = []; // очищаем временный массив файлов после загрузки
+        this.temporaryFiles = [];
       }
+      this.$emit('update-files', this.task.id);
+      this.updateTaskData({ id: this.task.id, editedTask: this.editedTask });
+      this.isEditing = false;
     },
-    setActiveTab(tab){
-      this.$emit('active-tab', tab)
+    setActiveTab(tab) {
+      this.$emit('active-tab', tab);
     },
     cancelEdit() {
       this.isEditing = false;
@@ -128,14 +156,17 @@ export default {
     toggleEditMode() {
       this.isEditing = true;
     },
-    async handleFileUpload(event) {
-      try {
-        const file = event.target.files[0];
-        const fileName = file.name;
-        await this.$store.dispatch('mTask/uploadDocument', { file, taskData: {taskId: this.task.id, number: "4551", fileName: fileName} });
-        this.$emit('history-list');
-      } catch (error) {
-        console.error('Ошибка при загрузке файла:', error);
+    async handleFileSelection(event) {
+      const file = event.target.files[0];
+      if (file) {
+        this.temporaryFiles.push({
+          fileObject: file,
+          taskId: this.task.id,
+          fileName: file.name,
+          name: '',
+          number: '',
+          url: URL.createObjectURL(file)
+        });
       }
     },
     async downloadFileEvent(fileId) {
@@ -146,7 +177,7 @@ export default {
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', `${fileId.url}`); // Установите имя файла для скачивания
+        link.setAttribute('download', `${fileId.url}`);
         document.body.appendChild(link);
         link.click();
       } catch (error) {
@@ -171,15 +202,15 @@ export default {
       }
     },
     getFileName(url) {
-      const startIndex = 14; // Индекс, с которого начинается нужная часть имени файла
-      return url.substring(startIndex); // Обрезаем начальную часть и возвращаем оставшуюся
+      const startIndex = 14;
+      return url.substring(startIndex);
     },
     getStatusDisplayValue(status) {
       switch (status) {
-        case 'AGREEMENT':
-          return 'Согласован';
         case 'CREATE':
           return 'Создан';
+        case 'AGREEMENT':
+          return 'Согласован';
         case 'COLLECT':
           return 'В сборке';
         case 'DONE':
@@ -191,16 +222,58 @@ export default {
         case 'DELETED':
           return 'Удалён';
         default:
-          return status; // Вернуть исходное значение, если неизвестный статус
+          return status;
       }
+    },
+    async uploadFile(file) {
+      try {
+        await this.$store.dispatch('mTask/uploadDocument', { 
+          file: file.fileObject, 
+          taskData: {
+            taskId: this.task.id, 
+            number: file.number, 
+            fileName: file.fileName, 
+            name: file.name} 
+          });
+      } catch (error) {
+        console.error('Ошибка при загрузке файла:', error);
+      }
+    },
+    showConfirmModal() {
+      this.isModalVisible = true;
+    },
+    hideConfirmModal() {
+      this.isModalVisible = false;
+    },
+    moveToNextStage() {
+      let nextStage;
+      switch (this.taskStage) {
+        case 'CREATE':
+          nextStage = 'AGREEMENT';
+          break;
+        case 'AGREEMENT':
+          nextStage = 'COLLECT';
+          break;
+        case 'COLLECT':
+          nextStage = 'DONE';
+          break;
+        default:
+          nextStage = this.taskStage;
+      }
+      this.$emit('move-to-next-stage', nextStage);
+      this.hideConfirmModal();
     },
   },
   mounted() {
     this.editedTask = { ...this.task };
     this.workGroupList();
+    this.taskFiles = { ...this.files };
+    this.taskStage = this.sStage;
+    console.log(this.taskFiles);
   },
 };
 </script>
+
 
 <style scoped>
 .task-details {

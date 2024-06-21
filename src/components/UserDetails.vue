@@ -1,6 +1,6 @@
 <template>
   <div v-if="user" class="user-details">
-    <h2>Детали задачи</h2>
+    <h2>Сведения о пользователе:</h2>
     <div v-if="isEditing">
       <!-- Режим редактирования -->
       <div v-for="field in fields" :key="field.key">
